@@ -1,0 +1,39 @@
+import numpy as np
+import jax
+import matplotlib.pyplot as plt
+from cartpole import CartPole
+
+# visual=True turns on animation (don’t use this in other sections!)
+#example_system = CartPole(visual=True)
+example_system = CartPole(visual=False)
+
+cart_position = 0.0
+cart_velocity = 10
+pole_angle = np.pi
+pole_velocity = 15
+cvelocity = [cart_velocity]
+pvelocity = [pole_velocity]
+clocation = [cart_position]
+plocation = [pole_angle]
+time = [0.0]
+dt = 0.1
+
+state = [cart_position, cart_velocity, pole_angle, pole_velocity]
+example_system.setState(state)
+for x in range(500):
+    example_system.performAction()
+    time.append(x*dt)
+    current_state = example_system.getState()
+    #print(current_state)
+    clocation.append(current_state[0]) 
+    cvelocity.append(current_state[1])
+    plocation.append(current_state[2])
+    pvelocity.append(current_state[3])
+print(len(clocation))   
+print(len(time))
+
+plt.figure()   
+plt.plot(time,cvelocity , label='Cart Location')
+plt.ylabel('Cart Velocity')
+plt.xlabel('time')
+plt.show()
