@@ -8,9 +8,9 @@ from cartpole import CartPole
 example_system = CartPole(visual=False)
 
 cart_position = 0.0
-cart_velocity = 10
-pole_angle = np.pi
-pole_velocity = 15
+cart_velocity = 1
+pole_angle = 0
+pole_velocity = 0
 cvelocity = [cart_velocity]
 pvelocity = [pole_velocity]
 clocation = [cart_position]
@@ -33,7 +33,7 @@ print(len(clocation))
 print(len(time))
 plt.figure()  
 #plt.plot(plocation, cvelocity) 
-plt.plot(time,pvelocity , label='Cart Location')
+plt.plot(time,cvelocity , label='Cart Location')
 #plt.plot(time, plocation, label = 'Pole Location')
 #plt.plot(time, cvelocity, label = 'Cart Velocity')
 #plt.plot(time, pvelocity, label = 'Pole Velocity')

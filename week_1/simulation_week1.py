@@ -6,7 +6,7 @@ from cartpole import CartPole
 example_system = CartPole(visual=True)
 cart_position = 0.0
 cart_velocity = 1
-pole_angle = np.pi
+pole_angle = 0
 pole_velocity = 0
 #time = [0.0]
 #dt = 0.1
