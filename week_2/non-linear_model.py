@@ -5,7 +5,7 @@ import jax
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 100
+n = 1000
 # visual=True turns on animation (don’t use this in other sections!)
 #example_system = CartPole(visual=True)
 X = np.empty((0, 4), float)
@@ -28,23 +28,16 @@ for i in range(1000):
 
     state = [[cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]]
     X = np.append(X, state, axis=0)
-    x_cart_position.append(state[0][0])
-    x_cart_velocity.append(state[0][1])
-    x_pole_angle.append(remap_angle(state[0][2]))
-    x_pole_velocity.append(state[0][3])
 
     example_system.setState(state[0])
     example_system.performAction()
 
     current_state = [example_system.getState()]
     current_state = [[current_state[0][0], current_state[0][1], current_state[0][2], current_state[0][3]]]
-    d_cart_position.append(current_state[0][0] - state[0][0])
-    d_cart_velocity.append(current_state[0][1] - state[0][1])
-    d_pole_angle.append(current_state[0][2] - state[0][2])
-    d_pole_velocity.append(current_state[0][3] - state[0][3])
     Y = np.append(Y, [[current_state[0][0]- state[0][0], current_state[0][1]-state[0][1], current_state[0][2]-state[0][2], current_state[0][3]-state[0][3]]], axis=0)
 #print(X)
 #print(Y) 
+C = Y.T @ X @ np.linalg.inv(X.T @ X)
 C = np.linalg.lstsq(X, Y, rcond=None)[0].T
 print(C)
 Y_pred = C @ X.T
@@ -68,7 +61,7 @@ example_system = CartPole(visual=False)
 cart_position = 1
 cart_velocity = 1
 pole_angle = 0
-pole_velocity = 0
+pole_velocity = 1
 
 state = [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
 example_system.setState(state)
@@ -76,7 +69,6 @@ pred_state = np.array(state)
 print(state)
 
 for i in range(n):
-    print('iteration is ', i)
     state = example_system.getState()
     X[i] = state
     pred_X[i] = pred_state
@@ -90,9 +82,9 @@ for i in range(n):
     #Y[i] = current_state - state
     pred_state_remapped = pred_state
     pred_state_remapped[2] = remap_angle(pred_state[2])
-    print('pred state is ', pred_state_remapped)
-    print('C@ pred state is ', C @ pred_state_remapped)
-    print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
+    #print('pred state is ', pred_state_remapped)
+    #print('C@ pred state is ', C @ pred_state_remapped)
+    #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
     pred_state = pred_state + (C @ pred_state_remapped)
     #pred_Y[i] = C @ pred_state
 
@@ -117,7 +109,7 @@ time = []
 for j in range(n):
     #k = random.randint(0, 3)
     #n = random.randint(0, 499)
-    time.append(j*0.1)
+    time.append(j*10)
     y_stream0.append(Y[j][0])
     y_pred_stream0.append(pred_Y[j][0])
     y_stream1.append(Y[j][1])
@@ -148,4 +140,3 @@ plt.xlabel('time step')
 plt.ylabel('state')
 plt.legend()
 plt.show()
-
