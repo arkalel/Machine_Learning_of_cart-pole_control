@@ -5,7 +5,7 @@ import jax
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 50
+n = 1000
 # visual=True turns on animation (don’t use this in other sections!)
 #example_system = CartPole(visual=True)
 X = np.empty((0, 4), float)
@@ -19,7 +19,7 @@ d_cart_velocity = []
 d_pole_angle = []
 d_pole_velocity = []
 
-for i in range(500):
+for i in range(1000):
     example_system = CartPole(visual=False)
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-10, 10)
@@ -65,35 +65,35 @@ d_pole_angle = []
 d_pole_velocity = []
 
 example_system = CartPole(visual=False)
-cart_position = 0
-cart_velocity = 0
-pole_angle = 1
-pole_velocity = 0
+cart_position = 1
+cart_velocity = 1
+pole_angle = 0
+pole_velocity = 1
 
-state = np.array([cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity])
+state = [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
 example_system.setState(state)
-pred_state = state
-print(state[1])
+pred_state = np.array(state)
+print(state)
 
 for i in range(n):
-    state = [example_system.getState()]
-    X[i] = state[0]
-    pred_X[i] = pred_state[0]
+    state = example_system.getState()
+    X[i] = state
+    pred_X[i] = pred_state
     #print('x is ',X)
     #print(Y)
 
     
     example_system.performAction()
 
-    current_state = np.array([example_system.getState()])
-    Y[i] = current_state - state
+    current_state = example_system.getState()
+    #Y[i] = current_state - state
     pred_state_remapped = pred_state
     pred_state_remapped[2] = remap_angle(pred_state[2])
-    print('pred state is ', pred_state_remapped)
-    print('C@ pred state is ', C @ pred_state_remapped)
-    print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
+    #print('pred state is ', pred_state_remapped)
+    #print('C@ pred state is ', C @ pred_state_remapped)
+    #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
     pred_state = pred_state + (C @ pred_state_remapped)
-    pred_Y[i] = C @ pred_state
+    #pred_Y[i] = C @ pred_state
 
 
 y_stream0 = []
@@ -134,14 +134,14 @@ for j in range(n):
     pred_x_stream2.append(pred_X[j][2])
     pred_x_stream3.append(pred_X[j][3])
 #print(X)
-#plt.plot(x_stream0, label='cart position')
-#plt.plot(x_stream1, label='cart velocity')
-#plt.plot(x_stream2, label='pole angle')
-plt.plot(x_stream3, label='pole velocity')
-plt.scatter(pred_x_stream0, time, label='Predicted position', linestyle='dashed')
-plt.scatter(pred_x_stream1, time, label='Predicted velocity', linestyle='dashed')
-plt.scatter(pred_x_stream2, time, label='Predicted angle', linestyle='dashed')
-plt.scatter(pred_x_stream3, time, label='Predicted pole velocity', linestyle='dashed')
+plt.plot(time, x_stream0, label='cart position')
+plt.plot(time, x_stream1, label='cart velocity')
+plt.plot(time, x_stream2, label='pole angle')
+plt.plot(time, x_stream3, label='pole velocity')
+plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed')
+plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
+plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
+plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
 
 plt.xlabel('time step')
 plt.ylabel('state')
