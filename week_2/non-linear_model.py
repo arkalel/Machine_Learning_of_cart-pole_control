@@ -6,6 +6,17 @@ import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
 n = 1000
+M = 100
+N = 1000
+lambda_ = 0.1
+omega1 = 0.1
+omega2 = 15
+omega3 = 1
+omega4 = 10
+omega = np.array([omega1, omega2, omega3, omega4])
+K = np.zeros((N, M))
+KMM = np.zeros((M, M))
+exponent = 0
 # visual=True turns on animation (don’t use this in other sections!)
 #example_system = CartPole(visual=True)
 X = np.empty((0, 4), float)
@@ -18,8 +29,13 @@ d_cart_position = []
 d_cart_velocity = []
 d_pole_angle = []
 d_pole_velocity = []
+y1 = np.empty(N, float)
+y2 = np.empty(N, float)
+y3 = np.empty(N, float)
+y4 = np.empty(N, float)
 
-for i in range(1000):
+#getting training data
+for i in range(N):
     example_system = CartPole(visual=False)
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-10, 10)
@@ -35,12 +51,75 @@ for i in range(1000):
     current_state = [example_system.getState()]
     current_state = [[current_state[0][0], current_state[0][1], current_state[0][2], current_state[0][3]]]
     Y = np.append(Y, [[current_state[0][0]- state[0][0], current_state[0][1]-state[0][1], current_state[0][2]-state[0][2], current_state[0][3]-state[0][3]]], axis=0)
-#print(X)
-#print(Y) 
-C = Y.T @ X @ np.linalg.inv(X.T @ X)
-C = np.linalg.lstsq(X, Y, rcond=None)[0].T
-print(C)
-Y_pred = C @ X.T
+    y1[i] = current_state[0][0]- state[0][0]
+    y2[i] = current_state[0][1]- state[0][1]
+    y3[i] = current_state[0][2]- state[0][2]
+    y4[i] = current_state[0][3]- state[0][3]
+
+#getting the centers for the RBFs
+T = np.empty((M, 4), float)
+for i in range(M):
+    cart_position = random.uniform(-2.5, 2.5)
+    cart_velocity = random.uniform(-10, 10)
+    pole_angle = random.uniform(-np.pi, np.pi)
+    pole_velocity = random.uniform(-15, 15)
+
+    T[i] = [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
+
+
+for i in range(N):
+    for j in range(M):
+        exponent = 0
+        exponent = exponent + (X[i][0] - T[j][0]) ** 2 / omega[0] ** 2
+        exponent = exponent + (X[i][1] - T[j][1]) ** 2 / omega[1] ** 2
+        exponent = exponent + np.sin((X[i][2] - T[j][2])) ** 2 / omega[2] ** 2
+        exponent = exponent + (X[i][3] - T[j][3]) ** 2 / omega[3] ** 2
+        K[i][j] = np.exp(-exponent)
+
+for i in range(M):
+    for j in range(M):
+        exponent = 0
+        exponent = exponent + (T[i][0] - T[j][0]) ** 2 / omega[0] ** 2
+        exponent = exponent + (T[i][1] - T[j][1]) ** 2 / omega[1] ** 2
+        exponent = exponent + np.sin((T[i][2] - T[j][2])) ** 2 / omega[2] ** 2
+        exponent = exponent + (T[i][3] - T[j][3]) ** 2 / omega[3] ** 2
+        KMM[i][j] = np.exp(-exponent)
+
+
+alpha1 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y1
+alpha2 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y2
+alpha3 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y3
+alpha4 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y4
+alpha1_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y1).T, rcond=None)[0]
+alpha2_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y2).T, rcond=None)[0]
+alpha3_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y3).T, rcond=None)[0]
+alpha4_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y4).T, rcond=None)[0]
+alpha1 = alpha1_t.T
+alpha2 = alpha2_t.T
+alpha3 = alpha3_t.T
+alpha4 = alpha4_t.T
+
+print('alpha1 is ', alpha1)
+print('alpha2 is ', alpha2)
+print('alpha3 is ', alpha3)
+print('alpha4 is ', alpha4)
+
+Y_pred = np.empty((N, 4), float)
+Y_pred = K @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+print('Y_pred is ', Y_pred)
+plt.plot(Y[:,2], label='True change in pole angle')
+plt.plot(Y_pred[:,2], label='Predicted change in pole angle', linestyle='dashed')
+plt.xlabel('time step')
+plt.ylabel('change in pole angle')
+plt.legend()
+plt.show()
+
+
+
+#C = Y.T @ X @ np.linalg.inv(X.T @ X)
+#C = np.linalg.lstsq(X, Y, rcond=None)[0].T
+#print(C)
+#Y_pred = C @ X.T
 #print(Y_pred.T[3:7])
 #print(Y[3:7])
 
@@ -58,16 +137,21 @@ d_pole_angle = []
 d_pole_velocity = []
 
 example_system = CartPole(visual=False)
-cart_position = 1
+cart_position = 0
 cart_velocity = 1
-pole_angle = 0
+pole_angle = np.pi
 pole_velocity = 1
 
 state = [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
 example_system.setState(state)
 pred_state = np.array(state)
-print(state)
-
+print('state is ', state)
+K_pred = np.empty(M, float)
+#A = np.array([1,0,1])
+#B = np.array([0,1,1])
+#C = A@B
+#print('C is ', C)
+#print(lambda_ * np.eye(M))
 for i in range(n):
     state = example_system.getState()
     X[i] = state
@@ -85,7 +169,20 @@ for i in range(n):
     #print('pred state is ', pred_state_remapped)
     #print('C@ pred state is ', C @ pred_state_remapped)
     #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
-    pred_state = pred_state + (C @ pred_state_remapped)
+    
+    for j in range(M):
+        exponent = 0
+        exponent = exponent + (pred_state_remapped[0] - T[j][0]) ** 2 / omega[0] ** 2
+        exponent = exponent + (pred_state_remapped[1] - T[j][1]) ** 2 / omega[1] ** 2
+        exponent = exponent + np.sin((pred_state_remapped[2] - T[j][2])) ** 2 / omega[2] ** 2
+        exponent = exponent + (pred_state_remapped[3] - T[j][3]) ** 2 / omega[3] ** 2
+        K_pred[j] = np.exp(-exponent)
+    #print('K_pred is ', K_pred)
+    pred_state = pred_state + K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+    #pred_state[0] = pred_state[0] + K_pred @ alpha1
+    #pred_state[1]= pred_state[1] + K_pred @ alpha2
+    #pred_state[2] = pred_state[2] + K_pred @ alpha3
+    #pred_state[3] = pred_state[3] + K_pred @ alpha4
     #pred_Y[i] = C @ pred_state
 
 
@@ -126,6 +223,7 @@ for j in range(n):
     pred_x_stream1.append(pred_X[j][1])
     pred_x_stream2.append(pred_X[j][2])
     pred_x_stream3.append(pred_X[j][3])
+
 #print(X)
 plt.plot(time, x_stream0, label='cart position')
 plt.plot(time, x_stream1, label='cart velocity')
