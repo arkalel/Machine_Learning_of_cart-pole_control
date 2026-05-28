@@ -5,14 +5,14 @@ import jax
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 1000
-M = 100
-N = 1000
-lambda_ = 0.1
-omega1 = 0.1
-omega2 = 15
+n = 50
+M = 400
+N = 2000
+lambda_ = 0.0001
+omega1 = 1000
+omega2 = 5
 omega3 = 1
-omega4 = 10
+omega4 = 5
 omega = np.array([omega1, omega2, omega3, omega4])
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
@@ -42,7 +42,7 @@ for i in range(N):
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-15, 15)
 
-    state = [[cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]]
+    state = [[cart_position, cart_velocity, pole_angle, pole_velocity]]
     X = np.append(X, state, axis=0)
 
     example_system.setState(state[0])
@@ -72,7 +72,7 @@ for i in range(N):
         exponent = 0
         exponent = exponent + (X[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (X[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + np.sin((X[i][2] - T[j][2])) ** 2 / omega[2] ** 2
+        exponent = exponent + np.sin((X[i][2] - T[j][2])/2) ** 2 / omega[2] ** 2
         exponent = exponent + (X[i][3] - T[j][3]) ** 2 / omega[3] ** 2
         K[i][j] = np.exp(-exponent)
 
@@ -81,15 +81,15 @@ for i in range(M):
         exponent = 0
         exponent = exponent + (T[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (T[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + np.sin((T[i][2] - T[j][2])) ** 2 / omega[2] ** 2
+        exponent = exponent + np.sin((T[i][2] - T[j][2])/2) ** 2 / omega[2] ** 2
         exponent = exponent + (T[i][3] - T[j][3]) ** 2 / omega[3] ** 2
         KMM[i][j] = np.exp(-exponent)
 
 
-alpha1 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y1
-alpha2 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y2
-alpha3 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y3
-alpha4 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y4
+#alpha1 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y1
+#alpha2 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y2
+#alpha3 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y3
+#alpha4 = np.linalg.inv(K.T @ K + lambda_ * KMM) @ K.T @ y4
 alpha1_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y1).T, rcond=None)[0]
 alpha2_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y2).T, rcond=None)[0]
 alpha3_t = np.linalg.lstsq((K.T @ K + lambda_ * KMM).T, (K.T @ y3).T, rcond=None)[0]
@@ -164,21 +164,30 @@ for i in range(n):
 
     current_state = example_system.getState()
     #Y[i] = current_state - state
-    pred_state_remapped = pred_state
-    pred_state_remapped[2] = remap_angle(pred_state[2])
+    #pred_state_remapped = pred_state
+    #pred_state_remapped[2] = remap_angle(pred_state[2])
     #print('pred state is ', pred_state_remapped)
     #print('C@ pred state is ', C @ pred_state_remapped)
     #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
     
     for j in range(M):
         exponent = 0
-        exponent = exponent + (pred_state_remapped[0] - T[j][0]) ** 2 / omega[0] ** 2
-        exponent = exponent + (pred_state_remapped[1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + np.sin((pred_state_remapped[2] - T[j][2])) ** 2 / omega[2] ** 2
-        exponent = exponent + (pred_state_remapped[3] - T[j][3]) ** 2 / omega[3] ** 2
+        exponent = exponent + ((pred_state[0] - T[j][0]) ** 2) / (omega[0] ** 2)
+        exponent = exponent + ((pred_state[1] - T[j][1]) ** 2) / (omega[1] ** 2)
+        exponent = exponent + (np.sin((pred_state[2] - T[j][2])/2) ** 2) / (omega[2] ** 2)
+        exponent = exponent + ((pred_state[3] - T[j][3]) ** 2) / (omega[3] ** 2)
         K_pred[j] = np.exp(-exponent)
     #print('K_pred is ', K_pred)
     pred_state = pred_state + K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+    #Y_pred[i] = K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+    #pred_state[0] = pred_state[0] + Y_pred[i][0]
+    #pred_state[1]= pred_state[1] + Y_pred[i][1]
+    #pred_state[2] = pred_state[2] + Y_pred[i][2]
+    #pred_state[3] = pred_state[3] + Y_pred[i][3]
+    print('you added is ', K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T)
+    print('pred state is ', pred_state)
+    
+   # print('current state is ', current_state)
     #pred_state[0] = pred_state[0] + K_pred @ alpha1
     #pred_state[1]= pred_state[1] + K_pred @ alpha2
     #pred_state[2] = pred_state[2] + K_pred @ alpha3

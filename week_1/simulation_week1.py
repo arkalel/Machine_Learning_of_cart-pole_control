@@ -5,9 +5,9 @@ from cartpole import CartPole
 # visual=True turns on animation (don’t use this in other sections!)
 example_system = CartPole(visual=True)
 cart_position = 0.0
-cart_velocity = 1
-pole_angle = 0
-pole_velocity = 0
+cart_velocity = 0
+pole_angle = np.pi
+pole_velocity = 1
 #time = [0.0]
 #dt = 0.1
 
