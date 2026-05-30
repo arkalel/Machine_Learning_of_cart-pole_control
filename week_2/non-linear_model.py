@@ -1,18 +1,18 @@
 import random
 from time import time
 import numpy as np
-import jax
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 50
-M = 400
-N = 2000
-lambda_ = 0.0001
+n = 1000
+M = 640
+N = 1280
+lambda_ = 0.00001
 omega1 = 1000
-omega2 = 5
-omega3 = 1
-omega4 = 5
+omega2 = 5.4
+omega3 = 0.8
+omega4 = 4.6
 omega = np.array([omega1, omega2, omega3, omega4])
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
@@ -215,7 +215,7 @@ time = []
 for j in range(n):
     #k = random.randint(0, 3)
     #n = random.randint(0, 499)
-    time.append(j*10)
+    time.append(j*0.1)
     y_stream0.append(Y[j][0])
     y_pred_stream0.append(pred_Y[j][0])
     y_stream1.append(Y[j][1])
@@ -243,7 +243,7 @@ plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
 plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
 plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
 
-plt.xlabel('time step')
+plt.xlabel('time')
 plt.ylabel('state')
 plt.legend()
 plt.show()
