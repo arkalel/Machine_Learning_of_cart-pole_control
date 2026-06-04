@@ -55,7 +55,7 @@ def get_mse(parameters):
         cv = start_cvs[j]
         pa = start_pas[j]
         pv = start_pvs[j]
-        state = [cp, cv, remap_angle(pa), pv]
+        state = [cp, cv, pa, pv]
         X_rollout = np.empty((n, 4), float)
         pred_X = np.empty((n, 4), float)
         example_system = CartPole(visual=False)
@@ -108,8 +108,8 @@ def get_train_mse(parameters):
     return float(jnp.mean((Y - Y_pred) ** 2))
 
 n = 100
-M = 1280
-N = 2560
+M = 640
+N = 1280
 z = 1
 num_starts = 10
 start_cps = [0] * num_starts 
@@ -130,9 +130,9 @@ Y_list = []
 for _ in range(N):
     example_system = CartPole(visual=False)
     cart_position = random.uniform(-2.5, 2.5)
-    cart_velocity = random.uniform(-10, 10)
+    cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-15, 15)
+    pole_velocity = random.uniform(-18, 18)
     state = np.array([cart_position, cart_velocity, pole_angle, pole_velocity])
     X_list.append(state)
     example_system.setState(state.tolist())
@@ -145,18 +145,18 @@ Y = jnp.array(Y_list)
 T_list = []
 for _ in range(M):
     cart_position = random.uniform(-2.5, 2.5)
-    cart_velocity = random.uniform(-10, 10)
+    cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-15, 15)
+    pole_velocity = random.uniform(-18, 18)
     T_list.append(
-        [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
+        [cart_position, cart_velocity, pole_angle, pole_velocity]
     )
 T = jnp.array(T_list)
 #return X, T, Y
 
-start_parameters = np.array([900, 11, 2.1 , 11 , 0.000001, 2.1])
-bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (1,10))
-eps =(0.005 * start_parameters)
+start_parameters = np.array([900, 11 , 2.1 , 11 , 0.0003, 2.1])
+bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.4,10))
+eps =(0.1 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
@@ -165,3 +165,9 @@ print("best mse:", result.fun)
 print("rollout mse:", get_mse(result.x))
 #best params [w1,w2,w3,w4,lambda,w5]: [8.99904787e+02 1.16986915e+01 2.11185866e+00 1.11728154e+01 8.32273336e-06 2.11185866e+00]
 #best mse: 557.9356689453125
+#best params [w1,w2,w3,w4,lambda,w5]: [8.99842906e+02 5.42594998e+00 8.37658302e-01 4.83582332e+00 3.83085561e-04 8.42595045e-01]
+#best mse: 286.9803771972656
+#best params [w1,w2,w3,w4,lambda,w5]: [9.0e+02 5.4e+00 8.3e-01 4.8e+00 3.0e-04 8.4e-01]
+#best mse: 254.1984100341797
+#best params [w1,w2,w3,w4,lambda,w5]: [8.99779661e+02 1.48736209e+01 1.90135298e+00 1.48736219e+01 1.06351295e-02 2.88465638e+00]
+#best mse: 330.1499328613281

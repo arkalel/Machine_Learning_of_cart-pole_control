@@ -8,7 +8,7 @@ from cartpole import CartPole, remap_angle
 n = 1000
 M = 640
 N = 1280
-lambda_ = 0.01   
+lambda_ = 0.01
 omega1 = 1000
 omega2 = 15
 omega3 = 1.9
@@ -42,8 +42,9 @@ for i in range(N):
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-18, 18)
+    action = random.uniform(-10,10)
 
-    state = [[cart_position, cart_velocity, pole_angle, pole_velocity]]
+    state = [[cart_position, cart_velocity, pole_angle, pole_velocity, action]]
     X = np.append(X, state, axis=0)
 
     example_system.setState(state[0])
@@ -58,12 +59,13 @@ for i in range(N):
     y4[i] = current_state[0][3]- state[0][3]
 
 #getting the centers for the RBFs
-T = np.empty((M, 4), float)
+T = np.empty((M, 5), float)
 for i in range(M):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-15, 15)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-20, 20)
+    action = random.uniform(-10,10)
 
     T[i] = [cart_position, cart_velocity, pole_angle, pole_velocity]
 
