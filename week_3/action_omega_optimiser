@@ -19,6 +19,7 @@ def rbf_kernel(A, B, omega):
         + jnp.sin(diff[..., 2]) ** 2 / omega[2] ** 2
         + diff[..., 3] ** 2 / omega[3] ** 2
         - jnp.cos(diff[..., 2]) ** 2 / omega[4] ** 2
+        + (A[:, None, 4] - B[None, :, 4]) ** 2 / omega[5] ** 2
     )
     return jnp.exp(-exponent)
 
@@ -31,7 +32,7 @@ def fit_alphas(K, KMM, Y, lambda_):
 
 @jax.jit
 def predict_delta(state, T, omega, alpha):
-    """State transition delta from RBF model; state is (4,), alpha is (M, 4)."""
+    """State transition delta from RBF model; state is (5,), alpha is (M, 4)."""
     k_pred = rbf_kernel(state[None, :], T, omega)[0]
     return k_pred @ alpha
     
@@ -42,8 +43,9 @@ def get_mse(parameters):
     omega3 = parameters[2]
     omega4 = parameters[3]
     omega5 = parameters[5]
+    omega6 = parameters[6]
     lambda_ = parameters[4]
-    omega = jnp.array([omega1, omega2, omega3, omega4, omega5])
+    omega = jnp.array([omega1, omega2, omega3, omega4, omega5, omega6])
 
     K = rbf_kernel(X, T, omega)
     KMM = rbf_kernel(T, T, omega)
@@ -65,11 +67,13 @@ def get_mse(parameters):
         #print("state is ", state)
         rollout_mse = 0
         for i in range(n):
+            action = random.uniform(-2, 2)
             state = example_system.getState()
             X_rollout[i] = state
             pred_X[i] = np.asarray(pred_state)
-            example_system.performAction()
-            delta = predict_delta(pred_state, T, omega, alpha)
+            example_system.performAction(action)
+            pred_variable = np.array([pred_state[0], pred_state[1], pred_state[2], pred_state[3], action])
+            delta = predict_delta(pred_variable, T, omega, alpha)
             pred_state = pred_state + delta
             #print("you added is ", delta)
             #print("pred state is ", pred_state)
@@ -111,9 +115,9 @@ def get_train_mse(parameters):
     Y_pred = K @ alpha
     return float(jnp.mean((Y - Y_pred) ** 2))
 
-n = 100
-M = 640
-N = 1280
+n = 50
+M = 1000
+N = 2000
 z = 1
 num_starts = 10
 start_cps = [0] * num_starts 
@@ -137,10 +141,11 @@ for _ in range(N):
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-18, 18)
+    action = random.uniform(-2, 2)
     state = np.array([cart_position, cart_velocity, pole_angle, pole_velocity])
-    X_list.append(state)
+    X_list.append([cart_position, cart_velocity, pole_angle, pole_velocity, action])
     example_system.setState(state.tolist())
-    example_system.performAction()
+    example_system.performAction(action)
     current_state = np.array(example_system.getState())
     Y_list.append(current_state - state)
 X = jnp.array(X_list)
@@ -152,30 +157,25 @@ for _ in range(M):
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-18, 18)
+    action = random.uniform(-2, 2)
     T_list.append(
-        [cart_position, cart_velocity, pole_angle, pole_velocity]
+        [cart_position, cart_velocity, pole_angle, pole_velocity, action]
     )
 T = jnp.array(T_list)
 #return X, T, Y
 
-start_parameters = np.array([900, 5.3 , 0.57 , 3.5 , 0.0001, 0.6])
-bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.2,10))
-eps =(0.1 * start_parameters)
+start_parameters = np.array([900, 7.4 , 0.55 , 3.4 , 0.0005, 1, 2])
+bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.2,10), (1, 20))
+eps =(0.01 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
-print("best params [w1,w2,w3,w4,lambda,w5]:", result.x)
+print("best params [w1,w2,w3,w4,lambda,w5,w6]:", result.x)
 print("best mse:", result.fun)
 print("rollout mse:", get_mse(result.x))
-#best params [w1,w2,w3,w4,lambda,w5]: [8.99904787e+02 1.16986915e+01 2.11185866e+00 1.11728154e+01 8.32273336e-06 2.11185866e+00]
-#best mse: 557.9356689453125
-#best params [w1,w2,w3,w4,lambda,w5]: [8.99842906e+02 5.42594998e+00 8.37658302e-01 4.83582332e+00 3.83085561e-04 8.42595045e-01]
-#best mse: 286.9803771972656
-#best params [w1,w2,w3,w4,lambda,w5]: [9.0e+02 5.4e+00 8.3e-01 4.8e+00 3.0e-04 8.4e-01]
-#best mse: 254.1984100341797
-#best params [w1,w2,w3,w4,lambda,w5]: [8.99779661e+02 1.48736209e+01 1.90135298e+00 1.48736219e+01 1.06351295e-02 2.88465638e+00]
-#best mse: 330.1499328613281
-#best params [w1,w2,w3,w4,lambda,w5]: [8.72079592e+02 3.24379551e+01 3.75383642e-01 2.54429673e+00 6.10504324e-02 6.39992506e+00]
-#best mse: 154.74868774414062
-#best params [w1,w2,w3,w4,lambda,w5]: [9.00013359e+02 4.40921627e+00 3.75923691e-01 2.46249306e+00 5.84997475e-02 3.94999075e-01]
-#best mse: 407.4273376464844
+#best params [w1,w2,w3,w4,lambda,w5,w6]: [9.00028580e+02 7.38674315e+00 5.48058822e-01 3.40359423e+00 4.73474189e-03 1.03882316e+00 1.88698255e+00]
+#best mse: 124.08665466308594
+#rollout mse: 164.96487426757812
+#best params [w1,w2,w3,w4,lambda,w5,w6]: [9.00000227e+02 7.39001942e+00 5.64736922e-01 3.47267104e+00 4.55849045e-04 1.01403519e+00 2.02807036e+00]
+#best mse: 204.8262939453125
+#rollout mse: 153.5197296142578

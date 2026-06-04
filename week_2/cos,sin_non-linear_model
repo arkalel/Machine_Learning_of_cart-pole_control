@@ -8,12 +8,12 @@ from cartpole import CartPole, remap_angle
 n = 1000
 M = 640
 N = 1280
-lambda_ = 0.01   
+lambda_ = 0.0001   
 omega1 = 1000
-omega2 = 15
-omega3 = 1.9
-omega4 = 1.5
-omega5 = 2.9
+omega2 = 5.3
+omega3 = 0.6
+omega4 = 3.5
+omega5 = 0.6
 omega = np.array([omega1, omega2, omega3, omega4, omega5])
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))

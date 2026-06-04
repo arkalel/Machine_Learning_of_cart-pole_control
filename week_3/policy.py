@@ -124,7 +124,12 @@ plt.legend()
 plt.show()
 
 def policy(state):
-    return 0.5 * np.sin(state[2]) + 0.1 * state[3]
+    return -10 * np.sin(state[2]/2) - 0.1 * state[3]
+
+def loss(X):
+    for d in range(4):
+        L = L + 1 - jnp.exp(-(X[d]) ** 2)
+    return L
 
 
 
@@ -167,8 +172,8 @@ K_pred = np.empty(M, float)
 #print('C is ', C)
 #print(lambda_ * np.eye(M))
 for i in range(n):
-    action = policy(pred_state)
     state = example_system.getState()
+    action = policy(state)
     X[i] = state
     pred_X[i] = pred_state
     #print('x is ',X)
