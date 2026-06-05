@@ -31,6 +31,7 @@ def predict_delta(state, T, omega, alpha):
     """State transition delta from RBF model; state is (4,), alpha is (M, 4)."""
     k_pred = rbf_kernel(state[None, :], T, omega)[0]
     return k_pred @ alpha
+
 def get_mse(parameters):
     X, T, Y = get_variables()
     omega1 = parameters[0]
@@ -67,8 +68,7 @@ def get_mse(parameters):
             example_system.performAction()
             delta = predict_delta(pred_state, T, omega, alpha)
             pred_state = pred_state + delta
-            #print("you added is ", delta)
-            #print("pred state is ", pred_state)
+
             x_stream0 = X_rollout[:, 0]
             x_stream1 = X_rollout[:, 1]
             x_stream2 = X_rollout[:, 2]
@@ -82,6 +82,7 @@ def get_mse(parameters):
         
         rollout_mse_values.append(rollout_mse)
     return float(np.mean(rollout_mse_values))
+
 def get_variables():
     X_list = []
     Y_list = []
@@ -113,7 +114,6 @@ def get_variables():
     T = jnp.array(T_list)
     return X, T, Y
 
-
 def get_averaged_mse(parameters):
     training_mse_values = []
     for i in range(3):
@@ -134,6 +134,7 @@ result = scopt.minimize(get_averaged_mse, start_parameters, method = 'L-BFGS-B',
 print("result is ", result)
 print("best params [w1,w2,w3,w4,lambda]:", result.x)
 print("best mse:", result.fun)
+
 #[29.89082662 13.48806651  6.63463367  0.03286368 29.89082662]
 #[39.56284555  5.35068001  0.79215364  4.55964728  0.04943956]
 #[40.38604488  5.23014025  1.15516129  6.35264376  0.05193022]

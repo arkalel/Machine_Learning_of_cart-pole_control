@@ -101,16 +101,6 @@ def get_averaged_mse(parameters):
     print("mean training mse is ", float(np.mean(training_mse_values)))
     return float(np.mean(training_mse_values))
 
-def get_train_mse(parameters):
-    omega = jnp.array([parameters[0], parameters[1], parameters[2],
-                       parameters[3], parameters[5]])
-    lambda_ = parameters[4]
-    K = rbf_kernel(X, T, omega)
-    KMM = rbf_kernel(T, T, omega)
-    alpha = fit_alphas(K, KMM, Y, lambda_)
-    Y_pred = K @ alpha
-    return float(jnp.mean((Y - Y_pred) ** 2))
-
 n = 100
 M = 640
 N = 1280

@@ -56,7 +56,7 @@ class CartPole:
         self.mu_p = 0.001 # # friction coefficient of the pole
         self.sim_steps = 50         # number of Euler integration steps to perform in one go
         self.delta_time = 0.1       # time step of the Euler integrator
-        self.max_force = 20.
+        self.max_force = 50.
         self.gravity = 9.8
         self.cart_mass = 0.5
 

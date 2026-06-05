@@ -37,6 +37,8 @@ def predict_delta(state, T, omega, alpha):
     return k_pred @ alpha
     
 def get_mse(parameters):
+    np.random.seed(42)  # Fixed seed for reproducibility
+    random.seed(42)
     #X, T, Y = get_variables()
     omega1 = parameters[0]
     omega2 = parameters[1]
@@ -67,7 +69,7 @@ def get_mse(parameters):
         #print("state is ", state)
         rollout_mse = 0
         for i in range(n):
-            action = random.uniform(-2, 2)
+            action = random.uniform(-10, 10)
             state = example_system.getState()
             X_rollout[i] = state
             pred_X[i] = np.asarray(pred_state)
@@ -86,7 +88,7 @@ def get_mse(parameters):
             pred_x_stream2 = pred_X[:, 2]
             pred_x_stream3 = pred_X[:, 3]
             residual = X_rollout - pred_X
-            rollout_mse = jnp.mean(residual ** 2)
+        rollout_mse = jnp.mean(residual ** 2)
         
         rollout_mse_values.append(rollout_mse)
     return float(np.mean(rollout_mse_values))
@@ -141,7 +143,7 @@ for _ in range(N):
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-18, 18)
-    action = random.uniform(-2, 2)
+    action = random.uniform(-10, 10)
     state = np.array([cart_position, cart_velocity, pole_angle, pole_velocity])
     X_list.append([cart_position, cart_velocity, pole_angle, pole_velocity, action])
     example_system.setState(state.tolist())
@@ -157,16 +159,16 @@ for _ in range(M):
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
     pole_velocity = random.uniform(-18, 18)
-    action = random.uniform(-2, 2)
+    action = random.uniform(-10,10)
     T_list.append(
         [cart_position, cart_velocity, pole_angle, pole_velocity, action]
     )
 T = jnp.array(T_list)
 #return X, T, Y
 
-start_parameters = np.array([900, 7.4 , 0.55 , 3.4 , 0.0005, 1, 2])
-bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.2,10), (1, 20))
-eps =(0.01 * start_parameters)
+start_parameters = np.array([900, 7.7 , 0.62 , 3.75 , 0.00059, 0.9, 10.1])
+bounds = ((10, 10000), (0.1, 50), (0.1, 10), (0.1, 50), (1e-6, 0.1), (0.2,10), (1, 50))
+eps =(0.1 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
@@ -179,3 +181,8 @@ print("rollout mse:", get_mse(result.x))
 #best params [w1,w2,w3,w4,lambda,w5,w6]: [9.00000227e+02 7.39001942e+00 5.64736922e-01 3.47267104e+00 4.55849045e-04 1.01403519e+00 2.02807036e+00]
 #best mse: 204.8262939453125
 #rollout mse: 153.5197296142578
+#best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99999746e+02 7.41113211e+00 5.60634914e-01 3.45244307e+00 6.11976077e-04 9.99099690e-01 9.98987151e+00]
+#best mse: 194.16964721679688
+#lambda_ = 0.0006  omega1 = 900 omega2 = 7.4 omega3 = 0.56 omega4 = 3.45 omega5 = 1.00 omega6 = 10.0
+#best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99997845e+02 7.67305416e+00 6.20507777e-01 3.74837257e+00 5.96160576e-04 9.94872222e-01 1.00403841e+01]
+#best mse: 186.4210662841797
