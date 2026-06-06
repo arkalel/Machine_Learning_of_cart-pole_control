@@ -5,16 +5,16 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 1000
+n = 500
 M = 1000
 N = 2000
-lambda_ = 0.0006  
+lambda_ = 0.00056  
 omega1 = 900
-omega2 = 7.4
-omega3 = 0.56
-omega4 = 3.45
-omega5 = 1.00
-omega6 = 10.0
+omega2 = 8.4
+omega3 = 0.6
+omega4 = 3.75
+omega5 = 1.15
+omega6 = 9.5
 omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6])
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
@@ -90,7 +90,7 @@ for i in range(M):
         exponent = exponent + (T[i][1] - T[j][1]) ** 2 / omega[1] ** 2
         exponent = exponent + (np.sin((T[i][2] - T[j][2])/2)) ** 2  / omega[2] ** 2
         exponent = exponent + (T[i][3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent - np.cos((T[i][2] - T[j][2])/2) ** 2 / omega[4] ** 2
+        exponent = exponent - (np.cos((T[i][2] - T[j][2])/2)) ** 2 / omega[4] ** 2
         exponent = exponent + (T[i][4] - T[j][4]) ** 2 / omega[5] ** 2
         KMM[i][j] = np.exp(-exponent)
 
@@ -170,7 +170,7 @@ for i in range(n):
         exponent = exponent + ((pred_state[1] - T[j][1]) ** 2) / (omega[1] ** 2)
         exponent = exponent + (np.sin((pred_state[2] - T[j][2])/2)) ** 2  / omega[2] ** 2
         exponent = exponent + (pred_state[3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent - np.cos((pred_state[2] - T[j][2])/2) ** 2 / omega[4] ** 2
+        exponent = exponent - (np.cos((pred_state[2] - T[j][2])/2)) ** 2 / omega[4] ** 2
         exponent = exponent + (action - T[j][4]) ** 2 / omega[5] ** 2
         K_pred[j] = np.exp(-exponent)
     pred_state = pred_state + K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
@@ -219,10 +219,10 @@ plt.plot(time, x_stream0, label='cart position')
 plt.plot(time, x_stream1, label='cart velocity')
 plt.plot(time, x_stream2, label='pole angle')
 plt.plot(time, x_stream3, label='pole velocity')
-plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed')
-plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
-plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
-plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
+plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color='blue')
+plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color='orange')
+plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color='green')
+plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color='red')
 
 plt.xlabel('time')
 plt.ylabel('state')

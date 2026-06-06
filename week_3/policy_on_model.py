@@ -35,7 +35,7 @@ def rbf_kernel(A, B, omega):
         + jnp.sin(diff[..., 2]) ** 2 / omega[2] ** 2
         + diff[..., 3] ** 2 / omega[3] ** 2
         - jnp.cos(diff[..., 2]) ** 2 / omega[4] ** 2
-        + (A[:, None, 4] - B[None, :, 4]) ** 2 / omega[4] ** 2
+        + (A[:, None, 4] - B[None, :, 4]) ** 2 / omega[5] ** 2
     )
     return jnp.exp(-exponent)
 
@@ -144,7 +144,7 @@ def simulate_rollout_and_loss(P):
         for i in range(n):
             loss_value = 0
             state = example_system.getState()
-            action = policy(state, P)
+            action = policy(pred_state, P)
             X_rollout[i] = state
             pred_X[i] = np.asarray(pred_state)
             example_system.performAction(action)
@@ -153,26 +153,26 @@ def simulate_rollout_and_loss(P):
             pred_state = pred_state + delta
 
         
-        rollout_loss = loss(X_rollout)
+        rollout_loss = loss(pred_X)
         #print('rollout loss is ', rollout_loss)
         total_loss += rollout_loss
 
     print('P is ', P)
-    #rollout_graph(X_rollout, pred_X)
+    rollout_graph(X_rollout, pred_X)
     print('average loss is ', total_loss / (num_starts))
     return total_loss / (num_starts)
         
 
-n = 100
+n = 300
 M = 1000
 N = 2000
-lambda_ = 0.0005  
-omega1 = 1000
-omega2 = 7.4
-omega3 = 0.56
-omega4 = 3.4
-omega5 = 1
-omega6 = 2
+lambda_ = 0.00056  
+omega1 = 900
+omega2 = 8.4
+omega3 = 0.6
+omega4 = 3.75
+omega5 = 1.15
+omega6 = 9.5
 X, T, Y = get_variables()
 num_starts = 1
 start_cps = [0] * num_starts 
@@ -183,7 +183,7 @@ start_pvs = [0] * num_starts
 for i in range(num_starts):
     start_cps[i] = 0
     start_cvs[i] = 0
-    start_pas[i] = np.pi
+    start_pas[i] = 0.1
     start_pvs[i] = 0
 
 omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6])
@@ -191,18 +191,17 @@ K = rbf_kernel(X, T, omega)
 KMM = rbf_kernel(T, T, omega)
 alpha = fit_alphas(K, KMM, Y, lambda_)
 
-P = np.array([-4, -1, 10, 3])
+P = np.array([-1.28, 6.33, 12.51, 6.30])  #[-1.28219168  6.33260175 12.51113255  6.3039672 ] is best for keeping upright, with average loss of  0.000102930666
+#[-44, -7, 8.7, 0.3] best for start with pa = pi
 print(simulate_rollout_and_loss(P))
 
 
-start_parameters = np.array([-44, -7 , 8.8, 0.3])
+start_parameters = np.array([-0.5, 5.33, 9.51, 5.30])
 bounds = ((-1000, 1000), (-1000, 1000), (-1000, 1000), (-1000, 1000))
-eps =(0.01 * start_parameters)
+eps =(0.1 * start_parameters)
 result = scopt.minimize(simulate_rollout_and_loss, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
 print("best params [a,b,c,d]:", result.x)
 print("best loss:", result.fun)
 print("best rollout loss:", simulate_rollout_and_loss(result.x))
-
-#P is  [-1.28219168  6.33260175 12.51113255  6.3039672 ] is best for keeping upright, with average loss of  0.000102930666
