@@ -148,7 +148,7 @@ def simulate_rollout_and_loss(P):
         for i in range(n):
             loss_value = 0
             state = example_system.getState()
-            action = policy(pred_state, P)
+            action = policy(state, P)
             action = np.clip(action, -10, 10)
             X_rollout[i] = [state[0], state[1], state[2], state[3], action]
             pred_X[i] = [pred_state[0], pred_state[1], pred_state[2], pred_state[3],action]
@@ -171,13 +171,13 @@ def simulate_rollout_and_loss(P):
 n = 100
 M = 1000
 N = 2000
-lambda_ = 0.00056
+lambda_ = 0.031
 omega1 = 900
-omega2 = 8.4
-omega3 = 0.6
-omega4 = 3.75
-omega5 = 1.15
-omega6 = 9.5
+omega2 = 5.8
+omega3 = 3.43
+omega4 = 17.7
+omega5 = 3.8
+omega6 = 7.1
 X, T, Y = get_variables()
 num_starts = 1
 start_cps = [0] * num_starts 

@@ -8,14 +8,14 @@ from cartpole import CartPole, remap_angle
 n = 500
 M = 1000
 N = 2000
-lambda_ = 0.00056  
+lambda_ = 0.031
 omega1 = 900
-omega2 = 8.4
-omega3 = 0.6
-omega4 = 3.75
-omega5 = 1.15
-omega6 = 9.8
-omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6])
+omega2 = 5.8
+omega3 = 3.43
+omega4 = 17.7
+omega5 = 3.8
+omega6 = 7.1
+omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6]) #best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99320949e+02 4.73913826e+00 4.83904382e+00 2.51576672e+00 7.12149923e-04 5.14101466e+00 8.68653048e+00]
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
 exponent = 0
@@ -42,8 +42,8 @@ for i in range(N):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-18, 18)
-    action = random.uniform(-10, 10)
+    pole_velocity = random.uniform(-30, 30)
+    action = random.uniform(-20, 20)
 
     state = [[cart_position, cart_velocity, pole_angle, pole_velocity]]
     X = np.append(X, [[cart_position, cart_velocity, pole_angle, pole_velocity, action]], axis=0)
@@ -65,8 +65,8 @@ for i in range(M):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-15, 15)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-20, 20)
-    action = random.uniform(-10, 10)
+    pole_velocity = random.uniform(-30, 30)
+    action = random.uniform(-20, 20)
 
     T[i] = [cart_position, cart_velocity, pole_angle, pole_velocity, action]
 

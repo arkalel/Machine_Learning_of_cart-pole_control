@@ -88,7 +88,9 @@ def get_mse(parameters):
             pred_x_stream2 = pred_X[:, 2]
             pred_x_stream3 = pred_X[:, 3]
             residual = X_rollout - pred_X
-        rollout_mse = jnp.mean(residual ** 2)
+        # Weighted MSE: divide by [100, 100, 4, 100] for [pos, vel, angle, ang_vel]
+        weights = jnp.array([1/100, 1/100, 1/4, 1/100])
+        rollout_mse = jnp.mean(jnp.sum((residual * weights) ** 2, axis=1))
         
         rollout_mse_values.append(rollout_mse)
     return float(np.mean(rollout_mse_values))
@@ -120,11 +122,20 @@ def get_train_mse(parameters):
 def get_clustered_mse(parameters):
     cluster_mses = []
     for k in range(cluster_size):
-        parameters_range = np.random.uniform(parameters - 0.1 * parameters, parameters + 0.1 * parameters, size=cluster_size)
-        cluster_mses.append(get_averaged_mse(parameters_range))
-    return np.mean(cluster_mses, axis=0)
+        # Add small random perturbation to each parameter
+        perturbed_params = parameters + np.random.uniform(-0.01, 0.01, size=len(parameters)) * parameters
+        # Clip to ensure within bounds
+        perturbed_params = np.clip(perturbed_params,
+                                   [10, 0.1, 0.1, 0.1, 1e-6, 0.2, 1],
+                                   [10000, 50, 10, 50, 0.1, 10, 50])
+        cluster_mses.append(get_averaged_mse(perturbed_params))
 
-n = 30
+    # Outlier protection: use median instead of mean
+    cluster_mses = np.array(cluster_mses)
+    print('median cluster mse is', np.median(cluster_mses))
+    return float(np.median(cluster_mses))  
+
+n = 50
 M = 1000
 N = 2000
 z = 1
@@ -150,8 +161,8 @@ for _ in range(N):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-18, 18)
-    action = random.uniform(-10, 10)
+    pole_velocity = random.uniform(-30, 30)
+    action = random.uniform(-20, 20)
     state = np.array([cart_position, cart_velocity, pole_angle, pole_velocity])
     X_list.append([cart_position, cart_velocity, pole_angle, pole_velocity, action])
     example_system.setState(state.tolist())
@@ -166,17 +177,17 @@ for _ in range(M):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-18, 18)
-    action = random.uniform(-10,10)
+    pole_velocity = random.uniform(-30, 30)
+    action = random.uniform(-20,20)
     T_list.append(
         [cart_position, cart_velocity, pole_angle, pole_velocity, action]
     )
 T = jnp.array(T_list)
 
-a = np.linspace(3, 13.5, num=50)
+a = np.linspace(3, 20, num=50)
 mse_a = np.zeros(len(a))
 for i in range(len(a)):
-    mse_a[i] = get_train_mse(np.array([900, 8.4 , 0.6 , 3.75 , 0.00056, 1.15, a[i]]))
+    mse_a[i] = get_averaged_mse(np.array([900, 8.4 , 0.6 , 4.5 , 0.00056, 1.15, a[i] ]))
 plt.plot(a, mse_a)
 plt.xlabel("omega_action")
 plt.ylabel("training mse")
@@ -186,7 +197,7 @@ plt.show()
 
 
 
-start_parameters = np.array([900, 8.4 , 0.6 , 3.75 , 0.00056, 1.15, 9.5])
+start_parameters = np.array([900, 8.4 , 0.6 , 3.75 , 0.00056, 1.15, 9.8])
 bounds = ((10, 10000), (0.1, 50), (0.1, 10), (0.1, 50), (1e-6, 0.1), (0.2,10), (1, 50))
 eps =(0.01 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',
@@ -209,3 +220,6 @@ print("rollout mse:", get_mse(result.x))
 #best mse: 186.4210662841797
 #best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99999608e+02 8.24708834e+00 6.60271309e-01 3.83092433e+00 5.66652541e-04 1.09470525e+00 9.74822911e+00]
 #best mse: 102.06514739990234
+#expanded training range 
+#best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99320949e+02 4.73913826e+00 4.83904382e+00 2.51576672e+00 7.12149923e-04 5.14101466e+00 8.68653048e+00]
+#best mse: 60.265281677246094
