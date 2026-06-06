@@ -95,6 +95,7 @@ def rollout_graph(X, pred_X):
     pred_x_stream1 = []
     pred_x_stream2 = []
     pred_x_stream3 = []
+    action_stream = []
     time = []
 
     for j in range(n):
@@ -109,15 +110,17 @@ def rollout_graph(X, pred_X):
         pred_x_stream1.append(pred_X[j][1])
         pred_x_stream2.append(pred_X[j][2])
         pred_x_stream3.append(pred_X[j][3])
+        action_stream.append(pred_X[j][4])
 
     plt.plot(time, x_stream0, label='cart position')
     plt.plot(time, x_stream1, label='cart velocity')
     plt.plot(time, x_stream2, label='pole angle')
     plt.plot(time, x_stream3, label='pole velocity')
-    plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed')
-    plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
-    plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
-    plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
+    plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color = 'blue')
+    plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color = 'orange')
+    plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color = 'green')
+    plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color = 'red')
+    plt.plot(time, action_stream, label= 'force')
 
     plt.xlabel('time')
     plt.ylabel('state')
@@ -134,41 +137,21 @@ def simulate_rollout_and_loss(P):
         pa = start_pas[j]
         pv = start_pvs[j]
         state = [cp, cv, pa, pv]
-        X_rollout = np.empty((n, 4), float)
-        pred_X = np.empty((n, 4), float)
+        X_rollout = np.empty((n, 5), float)
+        pred_X = np.empty((n, 5), float)
         example_system = CartPole(visual=False)
         state = [cp, cv , pa, pv]
         example_system.setState(state)
         pred_state = jnp.array(state)
         rollout_loss = 0
-        for i in range(n):
-            action = policy(pred_state, P)
-            action = jnp.clip(action, -10.0, 10.0)
-
-            # Debug: Check if pred_state is out of training distribution
-            if i % 10 == 0:
-                print(f"Step {i}: pred_state = {pred_state}, action = {action}")
-                if abs(pred_state[0]) > 3 or abs(pred_state[1]) > 12 or abs(pred_state[3]) > 18:
-                    print("  WARNING: Out of training distribution!")
-
-            X_rollout[i] = state
-            pred_X[i] = np.asarray(pred_state)
-            example_system.performAction(action)
-            total_state = np.array([pred_state[0], pred_state[1], pred_state[2], pred_state[3], action])
-            delta = predict_delta(total_state, T, omega, alpha)
-
-            # Debug: Check if delta is tiny
-            if i % 10 == 0:
-                print(f"  delta = {delta}, norm = {np.linalg.norm(delta)}")
-
-            pred_state = pred_state + delta
+        
         for i in range(n):
             loss_value = 0
             state = example_system.getState()
             action = policy(pred_state, P)
             action = np.clip(action, -10, 10)
-            X_rollout[i] = state
-            pred_X[i] = np.asarray(pred_state)
+            X_rollout[i] = [state[0], state[1], state[2], state[3], action]
+            pred_X[i] = [pred_state[0], pred_state[1], pred_state[2], pred_state[3],action]
             example_system.performAction(action)
             total_state = np.array([pred_state[0], pred_state[1], pred_state[2], pred_state[3], action])
             delta = predict_delta(total_state, T, omega, alpha)
@@ -188,7 +171,7 @@ def simulate_rollout_and_loss(P):
 n = 100
 M = 1000
 N = 2000
-lambda_ = 0.00056  
+lambda_ = 0.00056
 omega1 = 900
 omega2 = 8.4
 omega3 = 0.6
