@@ -142,9 +142,31 @@ def simulate_rollout_and_loss(P):
         pred_state = jnp.array(state)
         rollout_loss = 0
         for i in range(n):
+            action = policy(pred_state, P)
+            action = jnp.clip(action, -10.0, 10.0)
+
+            # Debug: Check if pred_state is out of training distribution
+            if i % 10 == 0:
+                print(f"Step {i}: pred_state = {pred_state}, action = {action}")
+                if abs(pred_state[0]) > 3 or abs(pred_state[1]) > 12 or abs(pred_state[3]) > 18:
+                    print("  WARNING: Out of training distribution!")
+
+            X_rollout[i] = state
+            pred_X[i] = np.asarray(pred_state)
+            example_system.performAction(action)
+            total_state = np.array([pred_state[0], pred_state[1], pred_state[2], pred_state[3], action])
+            delta = predict_delta(total_state, T, omega, alpha)
+
+            # Debug: Check if delta is tiny
+            if i % 10 == 0:
+                print(f"  delta = {delta}, norm = {np.linalg.norm(delta)}")
+
+            pred_state = pred_state + delta
+        for i in range(n):
             loss_value = 0
             state = example_system.getState()
             action = policy(pred_state, P)
+            action = np.clip(action, -10, 10)
             X_rollout[i] = state
             pred_X[i] = np.asarray(pred_state)
             example_system.performAction(action)
@@ -163,7 +185,7 @@ def simulate_rollout_and_loss(P):
     return total_loss / (num_starts)
         
 
-n = 300
+n = 100
 M = 1000
 N = 2000
 lambda_ = 0.00056  
@@ -196,7 +218,7 @@ P = np.array([-1.28, 6.33, 12.51, 6.30])  #[-1.28219168  6.33260175 12.51113255 
 print(simulate_rollout_and_loss(P))
 
 
-start_parameters = np.array([-0.5, 5.33, 9.51, 5.30])
+start_parameters = np.array([-1.28219168,  6.33260175, 12.51113255,  6.3039672 ])
 bounds = ((-1000, 1000), (-1000, 1000), (-1000, 1000), (-1000, 1000))
 eps =(0.1 * start_parameters)
 result = scopt.minimize(simulate_rollout_and_loss, start_parameters, method='L-BFGS-B',

@@ -6,14 +6,14 @@ from cartpole import CartPole, remap_angle
 example_system = CartPole(visual=True)
 cart_position = 0.0
 cart_velocity = 0
-pole_angle = 0.001
+pole_angle = np.pi
 pole_velocity = 0
 #time = [0.0]
 #dt = 0.1
 
 current_state = [cart_position, cart_velocity, pole_angle, pole_velocity]
 example_system.setState(current_state)
-P = np.array([-1.28219168,  6.33260175, 12.51113255,  6.3039672 ])     #P is  [-1.28219168  6.33260175 12.51113255  6.3039672 ] is best for keeping upright, with average loss of  0.000102930666
+P = np.array([-44, -7, 8.7, 0.3])     #P is  [-1.28219168  6.33260175 12.51113255  6.3039672 ] is best for keeping upright, with average loss of  0.000102930666
 #[-44, -7, 8.7, 0.3] best for start with pa = pi
 for x in range(100):
     current_state[2] = remap_angle(current_state[2])
