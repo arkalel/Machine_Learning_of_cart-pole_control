@@ -5,23 +5,22 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 500
+n = 1000
 M = 1500
 N = 3000
-lambda_ = 0.00015  
-omega1 = 900
-omega2 = 5.31
-omega3 = 0.82
-omega4 = 4.59
-omega5 = 4.15
-omega6 = 9.8
-omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6]) #best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99320949e+02 4.73913826e+00 4.83904382e+00 2.51576672e+00 7.12149923e-04 5.14101466e+00 8.68653048e+00]
+lambda_ = 0.0001   
+omega1 = 1000
+omega2 = 5.3
+omega3 = 0.6
+omega4 = 3.5
+omega5 = 0.6
+omega = np.array([omega1, omega2, omega3, omega4, omega5])
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
 exponent = 0
 # visual=True turns on animation (don’t use this in other sections!)
 #example_system = CartPole(visual=True)
-X = np.empty((0, 5), float)
+X = np.empty((0, 4), float)
 x_cart_position = []
 x_cart_velocity = []
 x_pole_angle = []
@@ -42,17 +41,16 @@ for i in range(N):
     cart_position = random.uniform(-2.5, 2.5)
     cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-30, 30)
-    action = random.uniform(-20, 20)
+    pole_velocity = random.uniform(-25, 25)
 
     state = [[cart_position, cart_velocity, pole_angle, pole_velocity]]
-    X = np.append(X, [[cart_position, cart_velocity, pole_angle, pole_velocity, action]], axis=0)
+    X = np.append(X, state, axis=0)
 
     example_system.setState(state[0])
-    example_system.performAction(action)
+    example_system.performAction()
 
     current_state = [example_system.getState()]
-    current_state = [[current_state[0][0], current_state[0][1], current_state[0][2], current_state[0][3], action]]
+    current_state = [[current_state[0][0], current_state[0][1], current_state[0][2], current_state[0][3]]]
     Y = np.append(Y, [[current_state[0][0]- state[0][0], current_state[0][1]-state[0][1], current_state[0][2]-state[0][2], current_state[0][3]-state[0][3]]], axis=0)
     y1[i] = current_state[0][0]- state[0][0]
     y2[i] = current_state[0][1]- state[0][1]
@@ -60,15 +58,14 @@ for i in range(N):
     y4[i] = current_state[0][3]- state[0][3]
 
 #getting the centers for the RBFs
-T = np.empty((M, 5), float)
+T = np.empty((M, 4), float)
 for i in range(M):
     cart_position = random.uniform(-2.5, 2.5)
-    cart_velocity = random.uniform(-15, 15)
+    cart_velocity = random.uniform(-12, 12)
     pole_angle = random.uniform(-np.pi, np.pi)
-    pole_velocity = random.uniform(-30, 30)
-    action = random.uniform(-20, 20)
+    pole_velocity = random.uniform(-25, 25)
 
-    T[i] = [cart_position, cart_velocity, pole_angle, pole_velocity, action]
+    T[i] = [cart_position, cart_velocity, pole_angle, pole_velocity]
 
 
 for i in range(N):
@@ -76,10 +73,9 @@ for i in range(N):
         exponent = 0
         exponent = exponent + (X[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (X[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + (np.sin(X[i][2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin((X[i][2] - T[j][2])/2)) ** 2  / omega[2] ** 2
         exponent = exponent + (X[i][3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(X[i][2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
-        exponent = exponent + (X[i][4] - T[j][4]) ** 2 / omega[5] ** 2
+        exponent = exponent - (np.cos((X[i][2] - T[j][2])/2)) ** 2 / omega[4] ** 2
         K[i][j] = np.exp(-exponent)
 
 for i in range(M):
@@ -88,10 +84,9 @@ for i in range(M):
         exponent = 0
         exponent = exponent + (T[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (T[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + (np.sin(T[i][2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin((T[i][2] - T[j][2])/2)) ** 2  / omega[2] ** 2
         exponent = exponent + (T[i][3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(T[i][2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
-        exponent = exponent + (T[i][4] - T[j][4]) ** 2 / omega[5] ** 2
+        exponent = exponent - np.cos((T[i][2] - T[j][2])/2) ** 2 / omega[4] ** 2
         KMM[i][j] = np.exp(-exponent)
 
 
@@ -123,9 +118,14 @@ plt.ylabel('change in pole angle')
 plt.legend()
 plt.show()
 
-def policy(state):
-        P = np.array([-44, -7, 8.7, 0.3])
-        return P.dot(state)
+
+
+#C = Y.T @ X @ np.linalg.inv(X.T @ X)
+#C = np.linalg.lstsq(X, Y, rcond=None)[0].T
+#print(C)
+#Y_pred = C @ X.T
+#print(Y_pred.T[3:7])
+#print(Y[3:7])
 
 X = np.empty((n, 4), float)
 pred_X = np.empty((n, 4), float)
@@ -133,7 +133,6 @@ x_cart_position = []
 x_cart_velocity = []
 x_pole_angle = []
 x_pole_velocity = []
-x_action = []
 Y = np.empty((n, 4), float)
 pred_Y = np.empty((n, 4), float)
 d_cart_position = []
@@ -146,36 +145,61 @@ cart_position = random.uniform(-2.5, 2.5)
 cart_velocity = random.uniform(-10, 10)
 pole_angle = random.uniform(-np.pi, np.pi)
 pole_velocity = random.uniform(-15, 15)
-action = random.uniform(-10, 10)
 
 state = [cart_position, cart_velocity, pole_angle, pole_velocity]
 example_system.setState(state)
 pred_state = np.array(state)
 print('state is ', state)
 K_pred = np.empty(M, float)
-
+#A = np.array([1,0,1])
+#B = np.array([0,1,1])
+#C = A@B
+#print('C is ', C)
+#print(lambda_ * np.eye(M))
 for i in range(n):
-    action = random.uniform(-10, 10)
     state = example_system.getState()
     X[i] = state
     pred_X[i] = pred_state
+    #print('x is ',X)
+    #print(Y)
+
     
-    example_system.performAction(action)
+    example_system.performAction()
 
     current_state = example_system.getState()
+    #Y[i] = current_state - state
+    #pred_state_remapped = pred_state
+    #pred_state_remapped[2] = remap_angle(pred_state[2])
+    #print('pred state is ', pred_state_remapped)
+    #print('C@ pred state is ', C @ pred_state_remapped)
+    #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
     
     for j in range(M):
+        pred_state[2] = pred_state[2]
         exponent = 0
         exponent = exponent + ((pred_state[0] - T[j][0]) ** 2) / (omega[0] ** 2)
         exponent = exponent + ((pred_state[1] - T[j][1]) ** 2) / (omega[1] ** 2)
-        exponent = exponent + (np.sin(pred_state[2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin((pred_state[2] - T[j][2])/2)) ** 2  / omega[2] ** 2
         exponent = exponent + (pred_state[3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(pred_state[2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
-        exponent = exponent + (action - T[j][4]) ** 2 / omega[5] ** 2
+        exponent = exponent - np.cos((pred_state[2] - T[j][2])/2) ** 2 / omega[4] ** 2
         K_pred[j] = np.exp(-exponent)
+    #print('K_pred is ', K_pred)
     pred_state = pred_state + K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+    #Y_pred[i] = K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T
+    #pred_state[0] = pred_state[0] + Y_pred[i][0]
+    #pred_state[1]= pred_state[1] + Y_pred[i][1]
+    #pred_state[2] = pred_state[2] + Y_pred[i][2]
+    #pred_state[3] = pred_state[3] + Y_pred[i][3]
     print('you added is ', K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T)
     print('pred state is ', pred_state)
+    
+   # print('current state is ', current_state)
+    #pred_state[0] = pred_state[0] + K_pred @ alpha1
+    #pred_state[1]= pred_state[1] + K_pred @ alpha2
+    #pred_state[2] = pred_state[2] + K_pred @ alpha3
+    #pred_state[3] = pred_state[3] + K_pred @ alpha4
+    #pred_Y[i] = C @ pred_state
+
 
 y_stream0 = []
 y_pred_stream0 = []
@@ -194,9 +218,9 @@ pred_x_stream1 = []
 pred_x_stream2 = []
 pred_x_stream3 = []
 time = []
-
 for j in range(n):
-
+    #k = random.randint(0, 3)
+    #n = random.randint(0, 499)
     time.append(j*0.1)
     y_stream0.append(Y[j][0])
     y_pred_stream0.append(pred_Y[j][0])
@@ -215,14 +239,15 @@ for j in range(n):
     pred_x_stream2.append(pred_X[j][2])
     pred_x_stream3.append(pred_X[j][3])
 
+#print(X)
 plt.plot(time, x_stream0, label='cart position')
 plt.plot(time, x_stream1, label='cart velocity')
 plt.plot(time, x_stream2, label='pole angle')
 plt.plot(time, x_stream3, label='pole velocity')
-plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color='blue')
-plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color='orange')
-plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color='green')
-plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color='red')
+plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed')
+plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
+plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
+plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
 
 plt.xlabel('time')
 plt.ylabel('state')

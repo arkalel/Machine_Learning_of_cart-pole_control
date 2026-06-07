@@ -16,9 +16,9 @@ def rbf_kernel(A, B, omega):
     exponent = (
         diff[..., 0] ** 2 / omega[0] ** 2
         + diff[..., 1] ** 2 / omega[1] ** 2
-        + jnp.sin(diff[..., 2]) ** 2 / omega[2] ** 2
+        + sin_diff[..., 2] ** 2 / omega[2] ** 2
         + diff[..., 3] ** 2 / omega[3] ** 2
-        - jnp.cos(diff[..., 2]) ** 2 / omega[4] ** 2
+        + cos_diff[..., 2] ** 2 / omega[4] ** 2
     )
     return jnp.exp(-exponent)
 
@@ -69,7 +69,8 @@ def get_mse(parameters):
             X_rollout[i] = state
             pred_X[i] = np.asarray(pred_state)
             example_system.performAction()
-            delta = predict_delta(pred_state, T, omega, alpha)
+            pred_state_remapped = pred_state.at[2].set(remap_angle(pred_state[2]))
+            delta = predict_delta(pred_state_remapped, T, omega, alpha)
             pred_state = pred_state + delta
             #print("you added is ", delta)
             #print("pred state is ", pred_state)
@@ -81,8 +82,8 @@ def get_mse(parameters):
             pred_x_stream1 = pred_X[:, 1]
             pred_x_stream2 = pred_X[:, 2]
             pred_x_stream3 = pred_X[:, 3]
-            residual = X_rollout - pred_X
-            rollout_mse = jnp.mean(residual ** 2)
+        residual = X_rollout - pred_X
+        rollout_mse = jnp.mean(residual ** 2)
         
         rollout_mse_values.append(rollout_mse)
     return float(np.mean(rollout_mse_values))
@@ -101,9 +102,9 @@ def get_averaged_mse(parameters):
     print("mean training mse is ", float(np.mean(training_mse_values)))
     return float(np.mean(training_mse_values))
 
-n = 100
-M = 640
-N = 1280
+n = 50
+M = 1500
+N = 3000
 z = 1
 num_starts = 10
 start_cps = [0] * num_starts 
@@ -148,15 +149,15 @@ for _ in range(M):
 T = jnp.array(T_list)
 #return X, T, Y
 
-start_parameters = np.array([900, 5.3 , 0.57 , 3.5 , 0.0001, 0.6])
-bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.2,10))
-eps =(0.1 * start_parameters)
+start_parameters = np.array([900, 5 , 0.8 , 5 , 0.00001, 1])
+bounds = ((10, 10000), (1, 50), (0.1, 10), (1, 50), (1e-6, 0.1), (0.2,100))
+eps =(0.01 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
 print("best params [w1,w2,w3,w4,lambda,w5]:", result.x)
 print("best mse:", result.fun)
-print("rollout mse:", get_mse(result.x))
+print("rollout mse:", get_averaged_mse(result.x))
 #best params [w1,w2,w3,w4,lambda,w5]: [8.99904787e+02 1.16986915e+01 2.11185866e+00 1.11728154e+01 8.32273336e-06 2.11185866e+00]
 #best mse: 557.9356689453125
 #best params [w1,w2,w3,w4,lambda,w5]: [8.99842906e+02 5.42594998e+00 8.37658302e-01 4.83582332e+00 3.83085561e-04 8.42595045e-01]

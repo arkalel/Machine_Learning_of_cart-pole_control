@@ -16,9 +16,9 @@ def rbf_kernel(A, B, omega):
     exponent = (
         diff[..., 0] ** 2 / omega[0] ** 2
         + diff[..., 1] ** 2 / omega[1] ** 2
-        + jnp.sin(diff[..., 2]) ** 2 / omega[2] ** 2
+        + (sin_diff[..., 2]) ** 2 / omega[2] ** 2
         + diff[..., 3] ** 2 / omega[3] ** 2
-        - (jnp.cos(diff[..., 2])) ** 2 / omega[4] ** 2
+        + (cos_diff[..., 2]) ** 2 / omega[4] ** 2
         + (diff[..., 4]) ** 2 / omega[5] ** 2
     )
     return jnp.exp(-exponent)
