@@ -8,13 +8,13 @@ from cartpole import CartPole, remap_angle
 n = 500
 M = 1500
 N = 3000
-lambda_ = 0.00015  
+lambda_ = 0.000025
 omega1 = 900
-omega2 = 5.31
-omega3 = 0.82
-omega4 = 4.59
-omega5 = 4.15
-omega6 = 9.8
+omega2 = 8.4
+omega3 = 0.6
+omega4 = 7
+omega5 = 0.6
+omega6 = 10
 omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6]) #best params [w1,w2,w3,w4,lambda,w5,w6]: [8.99320949e+02 4.73913826e+00 4.83904382e+00 2.51576672e+00 7.12149923e-04 5.14101466e+00 8.68653048e+00]
 K = np.zeros((N, M))
 KMM = np.zeros((M, M))
@@ -76,9 +76,9 @@ for i in range(N):
         exponent = 0
         exponent = exponent + (X[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (X[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + (np.sin(X[i][2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin(X[i][2]) - np.sin(T[j][2])) ** 2  / omega[2] ** 2
         exponent = exponent + (X[i][3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(X[i][2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
+        exponent = exponent + (np.cos(X[i][2]) - np.cos(T[j][2])) ** 2 / omega[4] ** 2
         exponent = exponent + (X[i][4] - T[j][4]) ** 2 / omega[5] ** 2
         K[i][j] = np.exp(-exponent)
 
@@ -88,9 +88,9 @@ for i in range(M):
         exponent = 0
         exponent = exponent + (T[i][0] - T[j][0]) ** 2 / omega[0] ** 2
         exponent = exponent + (T[i][1] - T[j][1]) ** 2 / omega[1] ** 2
-        exponent = exponent + (np.sin(T[i][2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin(T[i][2]) - np.sin(T[j][2])) ** 2  / omega[2] ** 2
         exponent = exponent + (T[i][3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(T[i][2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
+        exponent = exponent + (np.cos(T[i][2]) - np.cos(T[j][2])) ** 2 / omega[4] ** 2
         exponent = exponent + (T[i][4] - T[j][4]) ** 2 / omega[5] ** 2
         KMM[i][j] = np.exp(-exponent)
 
@@ -168,9 +168,9 @@ for i in range(n):
         exponent = 0
         exponent = exponent + ((pred_state[0] - T[j][0]) ** 2) / (omega[0] ** 2)
         exponent = exponent + ((pred_state[1] - T[j][1]) ** 2) / (omega[1] ** 2)
-        exponent = exponent + (np.sin(pred_state[2]) - np.sin(T[j][2]/2)) ** 2  / omega[2] ** 2
+        exponent = exponent + (np.sin(pred_state[2]) - np.sin(T[j][2])) ** 2  / omega[2] ** 2
         exponent = exponent + (pred_state[3] - T[j][3]) ** 2 / omega[3] ** 2
-        exponent = exponent + (np.cos(pred_state[2]) - np.cos(T[j][2]/2)) ** 2 / omega[4] ** 2
+        exponent = exponent + (np.cos(pred_state[2]) - np.cos(T[j][2])) ** 2 / omega[4] ** 2
         exponent = exponent + (action - T[j][4]) ** 2 / omega[5] ** 2
         K_pred[j] = np.exp(-exponent)
     pred_state = pred_state + K_pred @ np.array([alpha1, alpha2, alpha3, alpha4]).T

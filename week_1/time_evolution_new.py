@@ -68,7 +68,7 @@ example_system = CartPole(visual=False)
 cart_position = 1
 cart_velocity = 1
 pole_angle = 0
-pole_velocity = 1
+pole_velocity = 0.1
 
 state = [cart_position, cart_velocity, remap_angle(pole_angle), pole_velocity]
 example_system.setState(state)
@@ -139,10 +139,10 @@ plt.plot(time, x_stream0, label='cart position')
 plt.plot(time, x_stream1, label='cart velocity')
 plt.plot(time, x_stream2, label='pole angle')
 plt.plot(time, x_stream3, label='pole velocity')
-plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed')
-plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed')
-plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed')
-plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed')
+plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color  = 'blue')
+plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color  = 'orange')
+plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color  = 'green')
+plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color  = 'red')
 
 plt.xlabel('time')
 plt.ylabel('state')

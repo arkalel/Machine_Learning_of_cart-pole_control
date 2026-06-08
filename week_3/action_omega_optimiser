@@ -11,8 +11,8 @@ from cartpole import CartPole, remap_angle
 def rbf_kernel(A, B, omega):
     """Gaussian RBF kernel; A is (N, 4), B is (M, 4), returns (N, M)."""
     diff = A[:, None, :] - B[None, :, :]
-    sin_diff = jnp.sin(A[:, None, :]/2) - jnp.sin(B[None, :, :]/2)
-    cos_diff = jnp.cos(A[:, None, :]/2) - jnp.cos(B[None, :, :]/2)
+    sin_diff = jnp.sin(A[:, None, :]) - jnp.sin(B[None, :, :])
+    cos_diff = jnp.cos(A[:, None, :]) - jnp.cos(B[None, :, :])
     exponent = (
         diff[..., 0] ** 2 / omega[0] ** 2
         + diff[..., 1] ** 2 / omega[1] ** 2
@@ -197,7 +197,7 @@ plt.show()
 
 
 
-start_parameters = np.array([900, 8.4 , 0.6 , 3.75 , 0.00056, 1.15, 9.8])
+start_parameters = np.array([900, 5.31 , 0.82 , 4.59 , 0.0001, 0.8 , 10])
 bounds = ((10, 10000), (0.1, 50), (0.1, 10), (0.1, 50), (1e-6, 0.1), (0.2,10), (1, 50))
 eps =(0.01 * start_parameters)
 result = scopt.minimize(get_averaged_mse, start_parameters, method='L-BFGS-B',

@@ -11,8 +11,8 @@ from cartpole import CartPole, remap_angle
 def rbf_kernel(A, B, omega):
     """Gaussian RBF kernel; A is (N, 4), B is (M, 4), returns (N, M)."""
     diff = A[:, None, :] - B[None, :, :]
-    sin_diff = jnp.sin(A[:, None, :]/2) - jnp.sin(B[None, :, :]/2)
-    cos_diff = jnp.cos(A[:, None, :]/2) - jnp.cos(B[None, :, :]/2)
+    sin_diff = jnp.sin(A[:, None, :]) - jnp.sin(B[None, :, :])
+    cos_diff = jnp.cos(A[:, None, :]) - jnp.cos(B[None, :, :])
     exponent = (
         diff[..., 0] ** 2 / omega[0] ** 2
         + diff[..., 1] ** 2 / omega[1] ** 2

@@ -27,14 +27,16 @@ def loss(X):
 
 @jax.jit
 def rbf_kernel(A, B, omega):
-    """Gaussian RBF kernel; A is (N, 5), B is (M, 5), returns (N, M)."""
+    """Gaussian RBF kernel; A is (N, 4), B is (M, 4), returns (N, M)."""
     diff = A[:, None, :] - B[None, :, :]
+    sin_diff = jnp.sin(A[:, None, :]) - jnp.sin(B[None, :, :])
+    cos_diff = jnp.cos(A[:, None, :]) - jnp.cos(B[None, :, :])
     exponent = (
         diff[..., 0] ** 2 / omega[0] ** 2
         + diff[..., 1] ** 2 / omega[1] ** 2
-        + jnp.sin(diff[..., 2]) ** 2 / omega[2] ** 2
+        + sin_diff[..., 2] ** 2 / omega[2] ** 2
         + diff[..., 3] ** 2 / omega[3] ** 2
-        - jnp.cos(diff[..., 2]) ** 2 / omega[4] ** 2
+        + cos_diff[..., 2] ** 2 / omega[4] ** 2
         + (A[:, None, 4] - B[None, :, 4]) ** 2 / omega[5] ** 2
     )
     return jnp.exp(-exponent)
@@ -61,8 +63,8 @@ def get_variables():
         cart_position = random.uniform(-2.5, 2.5)
         cart_velocity = random.uniform(-10, 10)
         pole_angle = random.uniform(-np.pi, np.pi)
-        pole_velocity = random.uniform(-15, 15)
-        action = random.uniform(-10, 10)
+        pole_velocity = random.uniform(-25, 25)
+        action = random.uniform(-20, 20)
         state = np.array([cart_position, cart_velocity, pole_angle, pole_velocity])
         X_list.append([cart_position, cart_velocity, pole_angle, pole_velocity, action])
         example_system.setState(state.tolist())
@@ -77,8 +79,8 @@ def get_variables():
         cart_position = random.uniform(-2.5, 2.5)
         cart_velocity = random.uniform(-10, 10)
         pole_angle = random.uniform(-np.pi, np.pi)
-        pole_velocity = random.uniform(-15, 15)
-        action = random.uniform(-10, 10)
+        pole_velocity = random.uniform(-25, 25)
+        action = random.uniform(-20, 20)
         T_list.append(
             [cart_position, cart_velocity, pole_angle, pole_velocity, action]
         )
@@ -148,8 +150,7 @@ def simulate_rollout_and_loss(P):
         for i in range(n):
             loss_value = 0
             state = example_system.getState()
-            action = policy(state, P)
-            action = np.clip(action, -10, 10)
+            action = policy(pred_state, P)
             X_rollout[i] = [state[0], state[1], state[2], state[3], action]
             pred_X[i] = [pred_state[0], pred_state[1], pred_state[2], pred_state[3],action]
             example_system.performAction(action)
@@ -169,14 +170,14 @@ def simulate_rollout_and_loss(P):
         
 
 n = 100
-M = 1000
-N = 2000
-lambda_ = 0.031
+M = 1500
+N = 3000
+lambda_ = 0.000025
 omega1 = 900
-omega2 = 5.8
-omega3 = 3.43
-omega4 = 17.7
-omega5 = 3.8
+omega2 = 5
+omega3 = 0.8
+omega4 = 6
+omega5 = 0.8
 omega6 = 7.1
 X, T, Y = get_variables()
 num_starts = 1
