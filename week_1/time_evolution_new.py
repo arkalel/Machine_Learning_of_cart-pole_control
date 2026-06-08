@@ -5,7 +5,7 @@ import jax
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
 
-n = 100
+n = 650
 # visual=True turns on animation (don’t use this in other sections!)
 #example_system = CartPole(visual=True)
 X = np.empty((0, 4), float)
@@ -90,9 +90,9 @@ for i in range(n):
     #Y[i] = current_state - state
     pred_state_remapped = pred_state
     pred_state_remapped[2] = remap_angle(pred_state[2])
-    print('pred state is ', pred_state_remapped)
-    print('C@ pred state is ', C @ pred_state_remapped)
-    print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
+    #print('pred state is ', pred_state_remapped)
+    #print('C@ pred state is ', C @ pred_state_remapped)
+    #print('pred state after adding is ', pred_state + (C @ pred_state_remapped))
     pred_state = pred_state + (C @ pred_state_remapped)
     #pred_Y[i] = C @ pred_state
 
