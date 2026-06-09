@@ -4,7 +4,6 @@ import numpy as np
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from cartpole import CartPole, remap_angle
-
 n = 1000
 M = 640
 N = 1280

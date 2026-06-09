@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 from cartpole import CartPole, remap_angle
+from training_data import get_action_data
 
 
 @jax.jit
@@ -118,10 +119,10 @@ def rollout_graph(X, pred_X):
     plt.plot(time, x_stream1, label='cart velocity')
     plt.plot(time, x_stream2, label='pole angle')
     plt.plot(time, x_stream3, label='pole velocity')
-    plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color = 'blue')
-    plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color = 'orange')
-    plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color = 'green')
-    plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color = 'red')
+    #plt.plot(time, pred_x_stream0, label='Predicted position', linestyle='dashed', color = 'blue')
+    #plt.plot(time, pred_x_stream1, label='Predicted velocity', linestyle='dashed', color = 'orange')
+    #plt.plot(time, pred_x_stream2, label='Predicted angle', linestyle='dashed', color = 'green')
+    #plt.plot(time, pred_x_stream3, label='Predicted pole velocity', linestyle='dashed', color = 'red')
     plt.plot(time, action_stream, label= 'force')
 
     plt.xlabel('time')
@@ -150,7 +151,7 @@ def simulate_rollout_and_loss(P):
         for i in range(n):
             loss_value = 0
             state = example_system.getState()
-            action = policy(pred_state, P)
+            action = policy(state, P)
             X_rollout[i] = [state[0], state[1], state[2], state[3], action]
             pred_X[i] = [pred_state[0], pred_state[1], pred_state[2], pred_state[3],action]
             example_system.performAction(action)
@@ -169,7 +170,7 @@ def simulate_rollout_and_loss(P):
     return total_loss / (num_starts)
         
 
-n = 100
+n = 1000
 M = 1500
 N = 3000
 #lambda_ = 0.000025
@@ -186,7 +187,8 @@ omega3 = 0.6
 omega4 = 7
 omega5 = 0.6
 omega6 = 10
-X, T, Y = get_variables()
+#X, T, Y = get_variables()
+X, T, Y = get_action_data()
 num_starts = 1
 start_cps = [0] * num_starts 
 start_cvs = [0] * num_starts

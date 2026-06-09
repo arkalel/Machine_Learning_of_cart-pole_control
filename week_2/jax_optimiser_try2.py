@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 from cartpole import CartPole, remap_angle
+from training_data import get_standard_data
 
 
 @jax.jit
@@ -100,28 +101,27 @@ def get_train_mse(parameters):
     Y_pred = K @ alpha
     return float(jnp.mean((Y - Y_pred) ** 2))
 
-var_M = [10, 20, 40, 80, 160, 320, 640, 1280]#[640,800,900,1000,1100,1200,1250,1260,1270,1275,1278]
+var_M = [10, 20, 40, 80, 160, 320, 640, 1280]#[640,800,900,1000,1100,1200,1250,1260,1270,1275,1278][10, 20, 40, 80, 160, 320, 640, 1280]
 var_N = [20, 40, 80, 160, 320, 640, 1280, 2560]#[1280,1280,1280,1280,1280,1280,1280,1280,1280,1280,1280]
 mse_plot = [0, 0, 0, 0, 0, 0, 0, 0]
+num_starts = 10
+start_cps = [0] * num_starts 
+start_cvs = [0] * num_starts
+start_pas = [0] * num_starts
+start_pvs = [0] * num_starts    
+for i in range(num_starts):
+    start_cps[i] = random.uniform(-2.5, 2.5)
+    start_cvs[i] = random.uniform(-10, 10)
+    start_pas[i] = random.uniform(-np.pi, np.pi)
+    start_pvs[i] = random.uniform(-15, 15)
 for k in range(8):
-    np.random.seed(42)
-    random.seed(42)
-    n = 20
+    #np.random.seed(42)
+    #random.seed(42)
+    n = 50
     M = var_M[k]
     N = var_N[k]
     z = 1
-    num_starts = 10
-    start_cps = [0] * num_starts 
-    start_cvs = [0] * num_starts
-    start_pas = [0] * num_starts
-    start_pvs = [0] * num_starts
-
-    for i in range(num_starts):
-        start_cps[i] = random.uniform(-2.5, 2.5)
-        start_cvs[i] = random.uniform(-10, 10)
-        start_pas[i] = random.uniform(-np.pi, np.pi)
-        start_pvs[i] = random.uniform(-15, 15)
-
+    
     #def get_variables():
     X_list = []
     Y_list = []
@@ -155,10 +155,10 @@ for k in range(8):
     mse_plot[k] = get_train_mse(parameters)
 
 plt.plot(var_M, mse_plot)
-plt.xlabel('M = N/2')
+plt.xlabel('M')
 plt.ylabel('mse')
 plt.show()
-n = 40
+n = 30
 M = 640
 N = 1280
 z = 1
@@ -204,7 +204,7 @@ for _ in range(M):
     )
 T = jnp.array(T_list)
 #return X, T, Y
-
+X,T,Y = get_standard_data()
 
 
 start_parameters = np.array([900, 5.5, 0.8 , 4.5 , 0.00005])
