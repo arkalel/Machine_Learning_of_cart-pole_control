@@ -188,9 +188,9 @@ start_pas = [0] * num_starts
 start_pvs = [0] * num_starts
 
 for i in range(num_starts):
-    start_cps[i] = 1
+    start_cps[i] = 0
     start_cvs[i] = 0
-    start_pas[i] = np.pi
+    start_pas[i] = np.pi/2
     start_pvs[i] = 0
 
 omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6])
