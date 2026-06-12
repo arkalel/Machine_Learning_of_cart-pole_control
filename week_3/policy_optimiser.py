@@ -188,9 +188,9 @@ start_pas = [0] * num_starts
 start_pvs = [0] * num_starts
 
 for i in range(num_starts):
-    start_cps[i] = 0
+    start_cps[i] = 1
     start_cvs[i] = 0
-    start_pas[i] = 0.1
+    start_pas[i] = np.pi
     start_pvs[i] = 0
 
 omega = np.array([omega1, omega2, omega3, omega4, omega5, omega6])
@@ -202,7 +202,7 @@ P = np.array([-4, -1, 10, 3])
 print(simulate_rollout_and_loss(P))
 
 
-start_parameters = np.array([-1.28219168,  6.33260175, 12.51113255,  6.3039672 ])
+start_parameters = np.array([-44, -7, 8.7, 0.3])
 bounds = ((-1000, 1000), (-1000, 1000), (-1000, 1000), (-1000, 1000))
 eps =(0.01 * start_parameters)
 result = scopt.minimize(simulate_rollout_and_loss, start_parameters, method='L-BFGS-B',

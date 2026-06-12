@@ -170,7 +170,7 @@ def simulate_rollout_and_loss(P):
     return total_loss / (num_starts)
         
 
-n = 1000
+n = 800
 M = 1500
 N = 3000
 #lambda_ = 0.000025
@@ -187,8 +187,9 @@ omega3 = 0.6
 omega4 = 7
 omega5 = 0.6
 omega6 = 10
-#X, T, Y = get_variables()
-X, T, Y = get_action_data()
+
+X, T, Y = get_variables()
+#X, T, Y = get_action_data()
 num_starts = 1
 start_cps = [0] * num_starts 
 start_cvs = [0] * num_starts
@@ -213,7 +214,7 @@ print(simulate_rollout_and_loss(P))
 
 start_parameters = np.array([-1.28219168,  6.33260175, 12.51113255,  6.3039672 ])
 bounds = ((-1000, 1000), (-1000, 1000), (-1000, 1000), (-1000, 1000))
-eps =(0.1 * start_parameters)
+eps =(0.01 * start_parameters)
 result = scopt.minimize(simulate_rollout_and_loss, start_parameters, method='L-BFGS-B',
                         bounds=bounds, options={"maxiter": 200, "eps": eps, "ftol": 1e-5})
 print("result is ", result)
